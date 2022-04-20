@@ -1,0 +1,73 @@
+CONVERT RAC DATABASE INTO STANDALONE DATABASE
+There are several scenarios for this situation:
+
+1. Converting RAC instances to non-RAC instances permanently without keeping the Oracle Clusterware.
+2. Converting RAC instances to non-RAC instances permanently, but still keeping the Oracle Clusterware.
+3. Converting RAC instances to non-RAC instances temporarily, so the production DB can continue running while troubleshooting of RAC issues is in progress.
+
+In all cases, the Clusterware should be shutdown on other nodes to avoid conflicts of the operations.
+
+1. Converting RAC instances to non-RAC instances permanently without keeping the Oracle Clusterware.
+
+a.) Shutdown clusterware on ALL nodes with root user.
+b.) Run rootdelete and rootdeinstall with root user.
+c.) Run installer and remove the Clusterware home with crs user.
+d.) Install a new single instance home with oracle user. Also a separate ASM home if preferred.
+e.) As oracle user, remove the listener using netca from the OLD home. Create a new local listener using netca from the NEW home. The listener will not listen to VIP anymore. Change existing tnsnames.ora files on server and/or clients to use host IP instead of VIP.
+f.) Configure ASM using dbca from the new home with oracle user. Follow the instruction from dbca to create non-RAC CSS using “localconfig add” with root user.
+g.) With oracle user, copy the pfile/spfile from the old DB home to the new DB home, remove all the parameters for other instances in the pfile/spfile.
+
+— Remove cluster_database and cluster_database_instances parameters.
+— Remove undo_tablespace parameter for the other instances.
+— Remove remote_listener and local_listener parameters if present.
+
+h.) Startup new listener and ASM with oracle user. Make sure ASM diskgroups are mounted.
+i.) With oracle user, startup the database in mount stage and execute
+alter database disable thread <thread of other instance>;
+alter database open;
+j.) After opening database you can drop the redolog groups and/or tablespaces which are for other instances.
+k.) With oracle user, modify the ORACLE_HOME on /etc/oratab. And remove instance_number and thread parameters in the pfile/spfile.
+l.) With oracle user, run installer to remove the OLD ORACLE_HOME.
+
+2. Converting RAC instances to non-RAC instances permanently, but still keeping the Oracle Clusterware.
+
+In this scenario, it is also recommended to just install a Single Instance home and then start ASM and Database instances from the new home. (If preferred, a separate single-instance ASM home can be installed.) So, the inventory can be in sync of the changes, and this could prevent related problems in the future.
+
+a.) Leave the Oracle Clusterware as it is.
+b.) With oracle user, install a new SI home (runInstaller gives you option to install RAC enabled home or SI home). Also a separate ASM home if preferred.
+c.) With root user, stop Clusterware on all node except the current node. Stop DB/ASM instances and remove instance registries in the OCR using the srvctl from the old home with crs user.
+$ srvctl remove instance -d <name> -i <inst_name>
+$ srvctl remove database -d <name>
+$ srvctl remove asm -n <node_name> [-i <asm_inst_name>]
+
+d.) With oracle user, remove listeners using netca from the old home.
+e.) With oracle user, create a new listener using netca from the new home. If the listener will not listen to VIP anymore, change existing tnsnames.ora files on server and/or clients to use host IP instead of VIP.
+f.) With oracle user, configure single instance ASM using dbca from the new home.
+g.) Convert and start DB instance from the new home. See step g to l in scenario #1.
+h.) If preferred, register DB to the OCR.
+
+3. Converting RAC instances to non-RAC instances temporarily, so the production DB can continue running while troubleshooting of RAC issues is in progress.
+
+** Please note that while staying in this transition status, please DO NOT apply any RDBMS patch without first converting back to RAC.
+a.) Shutdown all instances including ASM and DB instances in RAC environment on ALL nodes with oracle user.
+b.) Shutdown all the listeners on ALL nodes with oracle user.
+c.) With oracle user, relink Oracle executable with rac_off option. (For both ASM and DB homes)
+$ make -f ins_rdbms.mk rac_off
+$ make -f ins_rdbms.mk ioracle
+
+d.) With oracle user, remove all parameters for other instances in the pfile/spfile.
+— Remove cluster_database and cluster_database_instances parameters. (For both ASM and DB)
+— Remove undo_tablespace parameter for the other instances. (For DB only)
+
+e.) With oracle user, startup listener and ASM. Make sure ASM diskgroups are mounted.
+f.) With oracle user, startup the database in mount stage and execute
+alter database disable thread <thread of other instance>;
+alter database open;
+
+g.) After opening database you can drop the redolog groups and/or tablespaces which are for other instances.
+h.) Disable autostart of ASM/DB/Clusterware. (Re-enable them after fixing the CRS/RAC issue)
+$ srvctl modify database -d <DBNAME> -y manual
+$ srvctl disable asm -n <node_name>
+# crsctl disable crs
+
+In-case of problem get in touch with me on: onlyuvraj@gmail.com
