@@ -1,0 +1,35 @@
+if hash rlwrap 2>/dev/null; then
+  alias sys='rlwrap -ci sqlplus / as sysdba'
+else
+  alias sys='sqlplus / as sysdba' 
+fi 
+
+export EDITOR=vi
+export NLS_DATE_FORMAT="YYYY-MM-DD hh24:mi:ss"
+export NLS_LANG=American_America.AL32UTF8
+
+
+export ORACLE_PATH=$HOME/scripts/common
+#export PS1=`whoami`@`hostname`:'(${ORACLE_SID})$ '
+export PS1='\[\033[0;31m\]\u\[\033[0m\]@\h(${ORACLE_SID})> '
+
+
+export PATH=$PATH:/home/oracle/scripts/common
+
+
+alias setenv='source /home/oracle/scripts/common/setenv.sh'
+
+#Define the GRID_HOME and crsstat alias
+alias crsstat='GRID_HOME was not found in the inventory'
+CENTRAL_ORAINV=`grep ^inventory_loc /etc/oraInst.loc | awk -F= '{print $2}'`;
+alias crsstat='echo Grid home was not found in the inventory ${CENTRAL_ORAINV}'
+for line in `grep "<HOME NAME=" ${CENTRAL_ORAINV}/ContentsXML/inventory.xml 2>/dev/null|grep -v -i 'REMOVED="T"'`;
+do
+    OH=`echo $line | tr ' ' '\n' | grep ^LOC= | awk -F\" '{print $2}'`;
+if [[ $OH == *"grid"* ]]; then
+  export GRID_HOME=$OH
+  export PATH=$PATH:$GRID_HOME/bin
+  alias crsstat='$GRID_HOME/bin/crsctl status res |grep -v "^$"|awk -F "=" '\''BEGIN {print " "} {printf("%s",NR%4 ? $2"|" : $2"\n")}'\''|sed -e '\''s/ *, /,/g'\'' -e '\''s/, /,/g'\''|awk -F "|" '\''BEGIN { printf "%-40s%-35s%-20s%-50s\n","Resource Name","Resource Type","Target ","State" }{ split ($3,trg,",") split ($4,st,",")}{for (i in trg) {printf "%-40s%-35s%-20s%-50s\n",$1,$2,trg[i],st[i]}}'\'''
+fi
+done
+
