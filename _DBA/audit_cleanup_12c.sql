@@ -1,3 +1,8 @@
+
+./emctl setproperty agent -name SSLCipherSuites -value  TLS_RSA_WITH_AES_128_CBC_SHA:TLS_RSA_WITH_AES_256_CBC_SHA:RSA_WITH_AES_256_CBC_SHA256
+./emctl stop agent
+./emctl start agent
+
 select * from aud$
 
 SELECT * FROM audit_unified_policies
@@ -8,6 +13,7 @@ select * from unified_audit_trail
   
 select min(event_timestamp) from unified_audit_trail;
 --All audit policies
+
 SELECT decode(count(*),5,'true','false') FROM (
 select decode(count(*),4,'true','false') "CHECK" from audit_unified_enabled_policies where policy_name in ( 'OBJ_POLICY_PCIDSS','SYSPRIV_POLICY_PCIDSS','STMT_POLICY_PCIDSS','DATAPUMP_POLICY_PCIDSS')
 union all
