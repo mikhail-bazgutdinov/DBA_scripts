@@ -7,6 +7,21 @@ select * from AUDIT_UNIFIED_ENABLED_POLICIES;
 select * from unified_audit_trail
   
 select min(event_timestamp) from unified_audit_trail;
+--All audit policies
+SELECT decode(count(*),5,'true','false') FROM (
+select decode(count(*),4,'true','false') "CHECK" from audit_unified_enabled_policies where policy_name in ( 'OBJ_POLICY_PCIDSS','SYSPRIV_POLICY_PCIDSS','STMT_POLICY_PCIDSS','DATAPUMP_POLICY_PCIDSS')
+union all
+select decode(count(*),1,'true','false') from dba_scheduler_jobs where owner||'.'||job_name in ('SYS.DAILY_OPERATIONS') and job_action like '%auddba.daily_audit_mgmt%' and state = 'SCHEDULED'
+union all
+select decode(count(*),0,'true','false') from audit_unified_enabled_policies where policy_name in (  'ORA_ACCOUNT_MGMT', 'ORA_CIS_RECOMMENDATIONS', 'ORA_DATABASE_PARAMETER', 'ORA_LOGON_FAILURES', 'ORA_RAS_POLICY_MGMT', 'ORA_RAS_SESSION_MGMT', 'ORA_SECURECONFIG')
+union all
+select decode(sum(i),0,'true','false') from (select count(*) i from dba_stmt_audit_opts
+  union     select count(*)     from dba_priv_audit_opts
+  union select count(*) from dba_obj_audit_opts)
+union all 
+select decode(count(*),2,'true','false') from dba_objects where owner = 'SYS' and objeCT_name = 'AUDDBA' and status = 'VALID') A
+WHERE A."CHECK" = 'true';
+
 
 SELECT * FROM dba_audit_mgmt_last_arch_ts;
 
