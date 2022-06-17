@@ -1,0 +1,125 @@
+Версия подтвердилась.
+
+Вот эти два рекурсивных запроса занимают время:
+
+SQL ID: 0zupx3gh9a883 Plan Hash: 879309802
+
+DELETE FROM SYS.MVREF$_CHANGE_STATS
+WHERE
+REFRESH_ID = :B2 AND MV_OBJ# = :B1
+
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse       62      0.00       0.00          0          0          0           0
+Execute  21425   1091.33    1106.14        430  570569189     137034       33708  <<<1100 сек. на CPU
+Fetch        0      0.00       0.00          0          0          0           0
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total    21487   1091.33    1106.14        430  570569189     137034       33708
+
+
+Rows (1st) Rows (avg) Rows (max)  Row Source Operation
+---------- ---------- ----------  ---------------------------------------------------
+         0          0          0  DELETE  MVREF$_CHANGE_STATS (cr=26631 pr=2 pw=0 time=54063 us starts=1)
+         8          3         15   INDEX FAST FULL SCAN I_MVREF$_CHANGE_STATS (cr=26631 pr=2 pw=0 time=61835 us starts=1 cost=9 size=16 card=1)(object id 254147)
+
+
+SQL ID: 9g4dd2hsrpbph Plan Hash: 52782241
+
+DELETE FROM SYS.MVREF$_RUN_STATS
+WHERE
+REFRESH_ID = :B1
+
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse       25      0.00       0.00          0          0          0           0
+Execute   5676     30.08      30.70       3398   19463007      23622        5676 <<<30 сек. на CPU
+Fetch        0      0.00       0.00          0          0          0           0
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total     5701     30.08      30.70       3398   19463007      23622        5676
+
+
+Rows (1st) Rows (avg) Rows (max)  Row Source Operation
+---------- ---------- ----------  ---------------------------------------------------
+         0          0          0  DELETE  MVREF$_RUN_STATS (cr=3429 pr=136 pw=0 time=11000 us starts=1)
+         1          1          1   INDEX FAST FULL SCAN I_MVREF$_RUN_STATS (cr=3429 pr=136 pw=0 time=10877 us starts=1 cost=2 size=10 card=1)(object id 254146)
+
+
+
+Удаление каждой MV занимало по 1-3 минуты.
+Выполнил truncate таблицы 
+truncate table mvref$_change_stats;
+
+и оставшиеся удаления проскочили за секунду:
+
+
+Materialized view dropped.
+
+Elapsed: 00:03:09.29
+
+Materialized view dropped.
+
+Elapsed: 00:03:08.85
+
+Materialized view dropped.
+
+Elapsed: 00:03:07.91
+
+Materialized view dropped.
+
+Elapsed: 00:01:13.66
+
+Materialized view dropped.
+
+Elapsed: 00:03:18.87
+
+Materialized view dropped.  <<<< Вот здесь выполнил truncate (в другой сессии)
+
+Elapsed: 00:00:00.13
+
+Materialized view dropped.
+
+Elapsed: 00:00:00.14
+
+Materialized view dropped.
+
+Elapsed: 00:00:00.12
+
+Materialized view dropped.
+
+Elapsed: 00:00:00.38
+
+
+Решение обходное (применил на CFDEV):
+Перед удалением MV выполнять truncate таблиц со статистикой их предыдущих обновлений:
+
+truncate table sys.mvref$_stats;
+truncate table sys.mvref$_run_stats;
+truncate table sys.mvref$_change_stats;
+truncate table sys.mvref$_stmt_stats;
+
+Решение постоянное (не применял на CFDEV, жду вашего решения):
+Отключить хранение статистики по истории обновлений MV:
+
+exec dbms_mview_stats.set_system_default('COLLECTION_LEVEL', 'NONE');
+
+Убедиться, что хранение статистики отключено:
+
+sys@CFDEV> select * from dba_mvref_stats_sys_defaults;
+
+PARAMETER_NAME                           VALUE
+---------------------------------------- ----------------------------------------
+COLLECTION_LEVEL                         TYPICAL    <<<сейчас включена 
+RETENTION_PERIOD                         365
+
+
+Прикрепляю логи удаления и создания MV, а также отчет по трассировке сессии удаления.
+Ошибки при создании были такие:
+
+ORA-12000: a materialized view log already exists on table 'MV_SF_USED_SUMS'
+ORA-02264: name already used by an existing constraint
+ORA-02264: name already used by an existing constraint
+ORA-02293: cannot validate (KF.CHK_MV_PP_ALLOCATION_REVENUE_R) - check constraint violated
+ORA-02293: cannot validate (KF.CHK_FIN_REQUEST_ALLOCATION_SUM) - check constraint violated
+ORA-02293: cannot validate (KF.CHK_MV_FIN_REQUEST_SUMS_PP) - check constraint violated
