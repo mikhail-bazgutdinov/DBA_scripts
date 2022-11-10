@@ -1,0 +1,55 @@
+<results md5_sum="ee28f4489f4c252950710064b271bc93">
+  <generated_date in_epoch_ms="1668104219000">2022-11-10 18:16:59</generated_date>
+  <patch has_prereqs="n" has_postreqs="n" is_system_patch="n"> 
+    <bug> 
+      <number>34713322</number>
+      <abstract><![CDATA[Fix for Bug 34713322]]></abstract>
+    </bug> 
+    <name>34713322</name>
+    <type>Patch</type>
+    <status>Available</status>
+    <access id="m">Open access</access> 
+    <url> 
+      <patch_readme host="https://updates.oracle.com"><![CDATA[/Orion/Services/download?type=readme&aru=24989914]]></patch_readme> 
+      <patch_details><![CDATA[/download/34713322.html]]></patch_details>
+    </url> 
+    <request_id>24989914</request_id>
+    <urm_components> 
+      <qparts ctype_id="201"> 
+        <qpart cid="32399" version="Q1370"><![CDATA[Enterprise Manager Base Platform]]></qpart> 
+      </qparts> 
+      <urm_releases ctype_id="5"> 
+        <urm_release cid="880078" version="13.4.0.0.0"><![CDATA[Enterprise Manager Base Platform - Agent]]></urm_release> 
+      </urm_releases> 
+    </urm_components> 
+    <product id="12383" bugdb_id="1370"><![CDATA[Enterprise Manager Base Platform]]></product> 
+    <release id="600000000112192" name="13.4.0.0.0" platform_patch_not_required="Y" cc="Y"><![CDATA[Enterprise Manager Base Platform - Agent 13.4.0.0.0]]></release> 
+    <platform id="2000" bugdb_id="289"><![CDATA[Generic Platform]]></platform> 
+    <language id="0" iso_code="EN"><![CDATA[American English]]></language> 
+    <translations_available>No</translations_available> 
+    <classification id="174">General</classification> 
+    <patch_classification id="174">General</patch_classification> 
+    <support_level id="G">General Support</support_level> 
+    <entitlements> 
+      <entitlement code="SW"/> 
+    </entitlements> 
+    <fixes_bugs truncated="no"> 
+      <bug> 
+        <number>34713322</number>
+        <abstract><![CDATA[Fix for Bug 34713322]]></abstract>
+      </bug> 
+    </fixes_bugs> 
+    <size>8637</size>
+    <files> 
+      <file> 
+        <name>p34713322_134000_Generic.zip</name>
+        <size>8637</size>
+        <download_url host="https://updates.oracle.com"><![CDATA[/Orion/Services/download/p34713322_134000_Generic.zip?aru=24989914&patch_file=p34713322_134000_Generic.zip]]></download_url> 
+        <digest type="SHA-256">06A5B010BDB9390AB53B745F5EBC243BCA5ACF5E722C51F99D0B94C52C431850</digest> 
+        <digest type="SHA-1">B269D0BA56E1DBAE5705CEB81C8F1339C52C0A2E</digest> 
+      </file> 
+    </files> 
+    <updated_date in_epoch_ms="1667456620000">2022-11-03 06:23:40</updated_date> 
+    <released_date in_epoch_ms="1667455483000">2022-11-03 06:04:43</released_date> 
+  </patch> 
+</results>
